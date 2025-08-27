@@ -24,8 +24,8 @@ eleccion20_df <- eleccion20_df %>% rename(
 )
 eleccion20_df <- eleccion20_df %>% mutate(derecha20 = CREEMOS + CC)
 eleccion20_df <- eleccion20_df %>% mutate(derecha20_pc = 100*derecha20/emitidos20)
-eleccion20_df <- eleccion20_df %>% mutate(mas20_pc = 100*(mas20+nulo20)/emitidos20)
-eleccion20_df <- eleccion20_df %>% select(id_departamento, municipio, derecha20_pc, mas20_pc, emitidos20)
+eleccion20_df <- eleccion20_df %>% mutate(masnulo20_pc = 100*(mas20+nulo20)/emitidos20)
+eleccion20_df <- eleccion20_df %>% select(id_departamento, municipio, derecha20_pc, masnulo20_pc, emitidos20)
 
 # Procesar datos de elección 2025
 
@@ -68,7 +68,7 @@ df_matched <- inner_join(eleccion20_df, eleccion25_df, by = c("id_departamento",
 
 # Movimientos 2020-2025 por municipio 
 
-df_matched$popular_abajo <- ifelse(df_matched$popular25_pc<=df_matched$mas20_pc, 1, 0)
+df_matched$popular_abajo <- ifelse(df_matched$popular25_pc<=df_matched$masnulo20_pc, 1, 0)
 df_matched$derecha_abajo <- ifelse(df_matched$derecha25_pc<=df_matched$derecha20_pc, 1, 0)
 df_matched$derechaamplia_abajo <- ifelse(df_matched$derechaamplia25_pc<=df_matched$derecha20_pc, 1, 0)
 mean(df_matched$popular_abajo)
@@ -77,7 +77,7 @@ mean(df_matched$derechaamplia_abajo)
 
 # Figura 1 
 
-plot_popular <- ggplot(df_matched, aes(x = popular25_pc, y = mas20_pc, size = emitidos25)) +
+plot_popular <- ggplot(df_matched, aes(x = popular25_pc, y = masnulo20_pc, size = emitidos25)) +
   geom_point(aes(color = DEPARTAMENTO == "La Paz"), alpha = 0.6) +
   scale_color_manual(values = c("FALSE" = "gray60", "TRUE" = "blue"), 
                      name = "Departamento",
