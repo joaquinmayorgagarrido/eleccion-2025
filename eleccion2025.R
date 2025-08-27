@@ -1,10 +1,13 @@
-
 rm(list=ls())
 
 library(dplyr)
 library(ggplot2)
 library(ggrepel) # TO add labels to scatterplot bubbles in ggplot
 library(readxl)
+
+setwd("/Users/joaquinmayorga/Downloads")
+
+# Procesar datos de elección 2020
 
 eleccion20_df <- read_excel("Datos OEP/EG2020_20201026_234234_3811128304235370806.xlsx")
 eleccion20_df <- eleccion20_df %>% filter(ID_PAIS==32 & CANDIDATURA=="PRESIDENTE")
@@ -24,6 +27,7 @@ eleccion20_df <- eleccion20_df %>% mutate(derecha20_pc = 100*derecha20/emitidos2
 eleccion20_df <- eleccion20_df %>% mutate(mas20_pc = 100*(mas20+nulo20)/emitidos20)
 eleccion20_df <- eleccion20_df %>% select(id_departamento, municipio, derecha20_pc, mas20_pc, emitidos20)
 
+# Procesar datos de elección 2025
 
 eleccion25_df <- read_excel("Datos OEP/EG2025_20250824_235612_7503428591324372789.xlsx")
 eleccion25_df <- eleccion25_df %>% filter(CodigoPais==32 & Descripcion=="PRESIDENTE")
@@ -58,7 +62,12 @@ eleccion25_df <- eleccion25_df %>%
   select(id_departamento, municipio, pdc25_pc, derecha25_pc, derechaamplia25_pc, popular25_pc, emitidos25)
 eleccion25_df <- eleccion25_df %>% select(id_departamento, municipio, pdc25_pc, derecha25_pc, derechaamplia25_pc, popular25_pc, emitidos25)
 
+# Merge de datos de elecciones 2020 y 2025 
+
 df_matched <- inner_join(eleccion20_df, eleccion25_df, by = c("id_departamento", "municipio"))
+
+# Movimientos 2020-2025 por municipio 
+
 df_matched$popular_abajo <- ifelse(df_matched$popular25_pc<=df_matched$mas20_pc, 1, 0)
 df_matched$derecha_abajo <- ifelse(df_matched$derecha25_pc<=df_matched$derecha20_pc, 1, 0)
 df_matched$derechaamplia_abajo <- ifelse(df_matched$derechaamplia25_pc<=df_matched$derecha20_pc, 1, 0)
@@ -66,33 +75,7 @@ mean(df_matched$popular_abajo)
 mean(df_matched$derecha_abajo)
 mean(df_matched$derechaamplia_abajo)
 
-sum(eleccion20_df$emitidos20, na.rm = TRUE)
-sum(eleccion25_df$emitidos25, na.rm = TRUE)
-
-#Nulos 2020: 3.5% 
-
-plot_pdc <- ggplot(df_matched, aes(x = pdc25_pc, y = mas20_pc, size = emitidos25)) +
-  geom_point(aes(color = DEPARTAMENTO == "La Paz"), alpha = 0.6) +
-  scale_color_manual(values = c("FALSE" = "gray60", "TRUE" = "blue"), 
-                     name = "Departamento",
-                     labels = c("Otros", "La Paz")) +
-  geom_abline(slope = 1, intercept = 0, linetype = "dashed", color = "red", alpha = 0.7) +
-  geom_text_repel(data = df_matched %>% filter(emitidos25 > 150000),
-                  aes(label = municipio), 
-                  size = 3,
-                  max.overlaps = Inf,
-                  box.padding = 0.3) +
-  scale_size_continuous(name = "Votos emitidos\n2025", 
-                        range = c(1, 10)) +
-  labs(
-    title = "Relación entre voto popular 2025 y MAS 2020 por municipio",
-    x = "PDC + MAS + AP + NULO 2025 (%)",
-    y = "MAS 2020 (%)",
-    caption = "Notas: Tamaño de burbuja = votos emitidos 2025."
-  ) +
-  theme_minimal() +
-  theme(legend.position = "right")
-print(plot_pdc)
+# Figura 1 
 
 plot_popular <- ggplot(df_matched, aes(x = popular25_pc, y = mas20_pc, size = emitidos25)) +
   geom_point(aes(color = DEPARTAMENTO == "La Paz"), alpha = 0.6) +
@@ -100,7 +83,7 @@ plot_popular <- ggplot(df_matched, aes(x = popular25_pc, y = mas20_pc, size = em
                      name = "Departamento",
                      labels = c("Otros", "La Paz")) +
   geom_abline(slope = 1, intercept = 0, linetype = "dashed", color = "red", alpha = 0.7) +
-  geom_text_repel(data = df_matched %>% filter(emitidos25 > 150000),
+  geom_text_repel(data = df_matched %>% filter(emitidos25 > 135000),
                   aes(label = municipio), 
                   size = 3,
                   max.overlaps = Inf,
@@ -108,7 +91,7 @@ plot_popular <- ggplot(df_matched, aes(x = popular25_pc, y = mas20_pc, size = em
   scale_size_continuous(name = "Votos emitidos\n2025", 
                         range = c(1, 10)) +
   labs(
-    title = "Relación entre voto MAS 2020 y popular 2025 por municipio",
+    title = "Figura 1: Relación entre voto MAS 2020 y popular 2025 por municipio",
     x = "PDC + MAS + AP + NULO 2025 (%)",
     y = "MAS + Nulo 2020 (%)",
     caption = "Notas: Tamaño de burbuja = votos emitidos 2025.\n% = porcentaje de votos emitidos."
@@ -117,6 +100,8 @@ plot_popular <- ggplot(df_matched, aes(x = popular25_pc, y = mas20_pc, size = em
   theme(legend.position = "right", plot.caption = element_text(hjust = 0.5))
 print(plot_popular)
 ggsave("/Users/joaquinmayorga/Downloads/popular.png", width = 4, height = 4)
+
+# Figura 2
 
 plot_derecha <- ggplot(df_matched, aes(x = derecha25_pc, y = derecha20_pc, size = emitidos25)) +
   geom_point(aes(color = DEPARTAMENTO == "La Paz"), alpha = 0.6) +
@@ -132,7 +117,7 @@ plot_derecha <- ggplot(df_matched, aes(x = derecha25_pc, y = derecha20_pc, size 
   scale_size_continuous(name = "Votos emitidos\n2025", 
                         range = c(1, 10)) +
   labs(
-    title = "Relación entre voto derecha 2020 y 2025 por municipio",
+    title = "Figura 2: Relación entre voto derecha 2020 y 2025 por municipio",
     x = "Libre + Unidad 2025 (%)",
     y = "Creemos + CC 2020 (%)",
     caption = "Nota: Tamaño de burbuja = votos emitidos 2025.\n % = porcentaje de votos emitidos."
@@ -141,11 +126,13 @@ plot_derecha <- ggplot(df_matched, aes(x = derecha25_pc, y = derecha20_pc, size 
   theme(legend.position = "right", plot.caption = element_text(hjust = 0.5))
 print(plot_derecha)
 
+# Figura 3 
+
 plot_derechaamplia <- ggplot(df_matched, aes(x = derechaamplia25_pc, y = derecha20_pc, size = emitidos25)) +
   geom_point(aes(color = DEPARTAMENTO == "La Paz"), alpha = 0.6) +
   scale_color_manual(values = c("FALSE" = "gray60", "TRUE" = "blue"), 
                      name = "Departamento",
-                     labels = c("Otros", "Cochabamba")) +
+                     labels = c("Otros", "La Paz")) +
   geom_abline(slope = 1, intercept = 0, linetype = "dashed", color = "red", alpha = 0.7) +
   geom_text_repel(data = df_matched %>% filter(emitidos25 > 135000),
                   aes(label = municipio), 
@@ -155,7 +142,7 @@ plot_derechaamplia <- ggplot(df_matched, aes(x = derechaamplia25_pc, y = derecha
   scale_size_continuous(name = "Votos emitidos\n2025", 
                         range = c(1, 10)) +
   labs(
-    title = "Relación entre voto derecha 2020 y derecha amplia 2025",
+    title = "Figura 3: Relación entre voto derecha 2020 y derecha amplia 2025",
     x = "Libre + Unidad + APB Súmate 2025 (%)",
     y = "Creemos + CC 2020 (%)",
     caption = "Nota: Tamaño de burbuja = votos emitidos 2025.\n % = porcentaje de votos emitidos."
@@ -164,6 +151,7 @@ plot_derechaamplia <- ggplot(df_matched, aes(x = derechaamplia25_pc, y = derecha
   theme(legend.position = "right", plot.caption = element_text(hjust = 0.5))
 print(plot_derechaamplia)
 
+# Imprimir figuras 
 
 print(plot_popular)
 print(plot_derecha)
