@@ -52,7 +52,7 @@ eleccion25_df <- eleccion25_df %>% mutate(popular25 = (pdc + ap + mas_ipsp + Vot
 eleccion25_df <- eleccion25_df %>% mutate(pdc25_pc = (pdc/emitidos25)*100)
 eleccion25_df <- eleccion25_df %>% mutate(derecha25_pc = (derecha25/emitidos25)*100)
 eleccion25_df <- eleccion25_df %>% mutate(derechaamplia25_pc = (derechaamplia25/emitidos25)*100)
-eleccion25_df <- eleccion25_df %>% mutate(popular25_pc = (popular25/emitidos25-0.036)*100)
+eleccion25_df <- eleccion25_df %>% mutate(popular25_pc = (popular25/emitidos25)*100)
 eleccion25_df <- eleccion25_df %>%
   ungroup() %>%
   select(id_departamento, municipio, pdc25_pc, derecha25_pc, derechaamplia25_pc, popular25_pc, emitidos25)
